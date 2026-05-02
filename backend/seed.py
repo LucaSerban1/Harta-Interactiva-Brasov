@@ -12,7 +12,7 @@ def seed():
         return
 
     test_user = User(
-        email="test@student.unitbv.ro",
+        email="test@s.unibuc.ro",
         username="student_test",
         hashed_password="hashed_placeholder",
         is_active=True,
