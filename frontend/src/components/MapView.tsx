@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -7,6 +7,7 @@ import type { Location } from '../mockData';
 import LocationPanel from './LocationPanel';
 import SearchBar from './SearchBar';
 import FilterBar from './FilterBar';
+import MapController from './MapController';
 
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -24,7 +25,6 @@ export default function MapView({ locations = mockLocations }: Props) {
   const [selected, setSelected] = useState<Location | null>(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
-
   const filtered = useMemo(() => {
   const q = search.toLowerCase().trim();
   return locations.filter(loc => {
@@ -38,7 +38,11 @@ export default function MapView({ locations = mockLocations }: Props) {
     return matchSearch && matchCategory;
   });
 }, [search, category, locations]);
-
+  useEffect(() => {
+  if (filtered.length === 1) {
+    setSelected(filtered[0]);
+  }
+}, [filtered]);
   return (
     <div style={{ position: 'relative' }}>
       <SearchBar value={search} onChange={setSearch} />
@@ -52,6 +56,7 @@ export default function MapView({ locations = mockLocations }: Props) {
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapController selected={selected} />
         {filtered.map((loc) => (
           <Marker
             key={loc.id}
