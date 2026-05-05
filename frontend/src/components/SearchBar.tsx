@@ -16,7 +16,7 @@ export default function SearchBar({ value, onChange }: Props) {
   zIndex: 9999, width: '320px', padding: '0.6rem 1rem',
   borderRadius: '8px', border: '1px solid #ccc',
   boxShadow: '0 2px 6px rgba(0,0,0,0.2)', fontSize: '14px',
-  background: 'white', color: 'black'
+  background: 'white', color: 'black', colorScheme: 'light'
 }}
     />
   );

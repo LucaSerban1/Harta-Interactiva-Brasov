@@ -8,7 +8,9 @@ const categories = [
   { value: 'cafe', label: '☕ Cafenele' },
   { value: 'library', label: '📚 Biblioteci' },
   { value: 'park', label: '🌳 Parcuri' },
-  { value: 'cowork', label: '💻 Cowork' },
+  { value: 'study', label: '💻 Study/Cowork' },
+  { value: 'restaurant', label: '🍽️ Restaurante' },
+  { value: 'landmark', label: '🏛️ Obiective' },
 ];
 
 export default function FilterBar({ selected, onChange }: Props) {

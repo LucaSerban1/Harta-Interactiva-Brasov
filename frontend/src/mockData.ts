@@ -1,13 +1,17 @@
 export interface Location {
   id: number;
   name: string;
-  address: string;
-  category: string;
-  rating: number;
   lat: number;
   lng: number;
-  photos: string[];
-  reviews: Review[];
+  category: string;
+  description?: string;
+  rating_avg?: number;
+  rating?: number;
+  address?: string;
+  tags?: string[];
+  is_verified?: boolean;
+  photos?: string[];
+  reviews?: Review[];
 }
 
 export interface Review {

@@ -28,9 +28,11 @@ export default function MapView({ locations = mockLocations }: Props) {
   const q = search.toLowerCase().trim();
   return locations.filter(loc => {
     const matchSearch = !q ||
-      loc.name.toLowerCase().includes(q) ||
-      loc.category.toLowerCase().includes(q) ||
-      loc.address.toLowerCase().includes(q);
+  loc.name.toLowerCase().includes(q) ||
+  loc.category.toLowerCase().includes(q) ||
+  (loc.address ?? '').toLowerCase().includes(q) ||
+  (loc.description ?? '').toLowerCase().includes(q) ||
+  (loc.tags ?? []).some(tag => tag.toLowerCase().includes(q));
     const matchCategory = !category || loc.category === category;
     return matchSearch && matchCategory;
   });
