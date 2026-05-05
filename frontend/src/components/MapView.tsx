@@ -4,7 +4,7 @@ import L from 'leaflet';
 import type { Location } from '../mockData';
 import { mockLocations } from '../mockData';
 
-// fix icon-uri leaflet broken în Vite
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
