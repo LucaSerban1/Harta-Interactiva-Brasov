@@ -1,8 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import locations, reviews
+from app.routers import locations, reviews, auth
 from app.models import location, reviews as reviews_model, user
-
 
 app = FastAPI(
     title="Harta Interactiva Brasov API",
@@ -20,6 +22,7 @@ app.add_middleware(
 
 app.include_router(locations.router, prefix="/locations", tags=["Locații"])
 app.include_router(reviews.router, prefix="/reviews", tags=["Recenzii"])
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 @app.get("/")
 async def root():
