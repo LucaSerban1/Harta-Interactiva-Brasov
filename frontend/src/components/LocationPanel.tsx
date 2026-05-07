@@ -21,7 +21,7 @@ export default function LocationPanel({ location, onClose }: Props) {
     }}>
       <button onClick={onClose} style={{ float: 'right', cursor: 'pointer' }}>✕</button>
 
-      <h2 style={{ marginTop: 0 }}>{location.name}</h2>
+      <h2 style={{ marginTop: 0, color: 'black' }}>{location.name}</h2>
       {location.address && <p style={{ color: '#666' }}>{location.address}</p>}
       {location.description && <p style={{ color: '#444' }}>{location.description}</p>}
       <p>⭐ {rating} · <span style={{ color: '#888' }}>{location.category}</span></p>
@@ -55,14 +55,14 @@ export default function LocationPanel({ location, onClose }: Props) {
 
       <h3>Review-uri</h3>
       {reviews.length === 0 ? (
-        <p style={{ color: '#aaa' }}>Nu există review-uri încă.</p>
+        <p style={{ color: '#000000' }}>Nu există review-uri încă.</p>
       ) : (
         reviews.slice(0, 10).map(review => (
           <div key={review.id} style={{
             borderTop: '1px solid #eee', paddingTop: '0.5rem', marginTop: '0.5rem'
           }}>
             <strong>{review.user}</strong> — ⭐ {review.rating}
-            <p style={{ margin: '4px 0' }}>{review.text}</p>
+            <p style={{ margin: '4px 0',color: 'black' }}>{review.text}</p>
             <small style={{ color: '#aaa' }}>{review.date}</small>
           </div>
         ))
