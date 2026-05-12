@@ -5,6 +5,7 @@ import AdminPage from './pages/AdminPage';
 import AuthCallback from './pages/AuthCallback';
 import { fetchLocations } from './api';
 import type { Location } from './mockData';
+import ProfilePage from './pages/ProfilePage';
 
 function MapWrapper() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -31,6 +32,7 @@ function App() {
         <Route path="/" element={<MapWrapper />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   );
