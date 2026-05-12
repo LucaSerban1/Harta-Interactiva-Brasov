@@ -7,7 +7,7 @@ export default function AuthCallback() {
     const token = new URLSearchParams(window.location.search).get("token");
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/");
+      navigate("/profile");
     }
   }, []);
   return <div style={{ padding: '2rem' }}>Se autentifică...</div>;
