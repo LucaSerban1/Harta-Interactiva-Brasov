@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'; 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { mockLocations } from '../mockData';
@@ -18,6 +18,15 @@ L.Icon.Default.mergeOptions({
 
 interface Props {
   locations?: Location[];
+}
+
+function MapEvents({ onMapClick }: { onMapClick: () => void }) {
+  useMapEvents({
+    click: () => {
+      onMapClick();
+    },
+  });
+  return null;
 }
 
 export default function MapView({ locations = mockLocations }: Props) {
@@ -49,33 +58,51 @@ export default function MapView({ locations = mockLocations }: Props) {
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <SearchBar value={search} onChange={setSearch} />
       <FilterBar selected={category} onChange={setCategory} />
-      <a
-       href="http://localhost:8000/auth/login"
-        style={{
-          position: 'fixed', top: '1rem', right: '1rem',
-          zIndex: 9999, background: '#2563eb', color: 'white',
-          padding: '0.5rem 1rem', borderRadius: '8px',
-          textDecoration: 'none', fontSize: '14px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-        }}
-      >
-        🔐 Login
-      </a>
+
+      {!selected && (
+        <a
+          href="http://localhost:8000/auth/login"
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 9999,
+            background: '#2563eb',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            fontSize: '14px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+          }}
+        >
+          🔐 Login
+        </a>
+      )}
+
       <MapContainer
         center={[45.6427, 25.5887]}
         zoom={14}
-        style={{ width: '100%', height: '100vh' }}
+        style={{ width: '100%', height: '100vh', zIndex: 1 }}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
         <MapController selected={selected} />
+
+        <MapEvents onMapClick={() => setSelected(null)} />
+
         {filtered.map((loc) => (
           <Marker
             key={loc.id}
             position={[loc.lat, loc.lng]}
-            eventHandlers={{ click: () => setSelected(loc) }}
+            eventHandlers={{ 
+              click: (e) => {
+                setSelected(loc);
+              } 
+            }}
           />
         ))}
       </MapContainer>
