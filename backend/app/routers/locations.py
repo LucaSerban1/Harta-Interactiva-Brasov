@@ -35,3 +35,34 @@ def create_location(location: LocationCreate, db: Session = Depends(get_db)):
         description=location.description,
         tags=location.tags
     )
+
+@router.patch("/{location_id}")
+def update_location(
+    location_id: int,
+    data: dict,
+    db: Session = Depends(get_db)
+):
+    location = crud_locations.get_by_id(db, location_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Locația nu există")
+
+    for key, value in data.items():
+        if hasattr(location, key):
+            setattr(location, key, value)
+
+    db.commit()
+    db.refresh(location)
+    return location
+
+@router.delete("/{location_id}")
+def delete_location(
+    location_id: int,
+    db: Session = Depends(get_db)
+):
+    location = crud_locations.get_by_id(db, location_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Locația nu există")
+
+    db.delete(location)
+    db.commit()
+    return {"message": "Locație ștearsă"}
