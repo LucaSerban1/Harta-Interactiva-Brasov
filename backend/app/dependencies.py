@@ -38,3 +38,4 @@ def get_optional_user(
         return db.query(User).filter(User.id == user_id).first()
     except Exception:
         return None
+    

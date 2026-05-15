@@ -14,4 +14,5 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
+    favorites = relationship("Favorite", back_populates="user")
     reviews = relationship("Review", back_populates="user")

@@ -14,4 +14,6 @@ class Location(Base):
     rating_avg = Column(Float, default=0.0)
     is_verified = Column(Boolean, default=False)
     tags = Column(ARRAY(String), default=[])
+
+    favorited_by = relationship("Favorite", back_populates="location")
     reviews = relationship("Review", back_populates="location")
