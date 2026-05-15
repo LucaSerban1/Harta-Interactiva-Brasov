@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
@@ -21,7 +21,6 @@ class ReviewOut(BaseModel):
     model_config = {"from_attributes": True}
 
 class ReviewIn(BaseModel):
-    from pydantic import Field
     location_id: int
     rating: float = Field(ge=1, le=5)
     text: str = Field(min_length=10, max_length=1000)
