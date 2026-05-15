@@ -34,3 +34,13 @@ def create(db: Session, location_id: int, user_id: int,
     db.commit()
 
     return review
+
+def delete(db: Session, review_id: int, user_id: int, is_admin: bool):
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        return None, "not_found"
+    if review.user_id != user_id and not is_admin:
+        return None, "forbidden"
+    db.delete(review)
+    db.commit()
+    return review, None
