@@ -5,12 +5,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import locations, reviews, auth
 from app.models import location, reviews as reviews_model, user
+from fastapi.security import HTTPBearer
 
 app = FastAPI(
     title="Harta Interactiva Brasov API",
     description="API pentru harta interactivă a Brașovului",
-    version="1.0.0"
+    version="1.0.0",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
+
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
