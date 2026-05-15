@@ -1,5 +1,5 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Header, HTTPException, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 import os
@@ -26,11 +26,13 @@ def get_current_user(
     return user
 
 def get_optional_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    authorization: str = Header(default=None),
     db: Session = Depends(get_db)
 ):
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
     try:
-        token = credentials.credentials
+        token = authorization.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_id = int(payload["sub"])
         return db.query(User).filter(User.id == user_id).first()

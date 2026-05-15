@@ -3,14 +3,18 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 from app.routers import locations, reviews, auth, favorite
 from app.models import location, reviews as reviews_model, user, favorite as favorite_model
 
 app = FastAPI(
     title="Harta Interactiva Brasov API",
     description="API pentru harta interactivă a Brașovului",
-    version="1.0.0"
+    version="1.0.0",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
+
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,

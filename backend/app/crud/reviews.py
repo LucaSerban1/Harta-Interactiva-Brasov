@@ -1,13 +1,14 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 import bleach
 from app.models.reviews import Review
 from app.models.location import Location
 
-ALLOWED_TAGS = []  # niciun tag HTML permis
+ALLOWED_TAGS = []
 
-def get_by_location(db: Session, location_id: int, limit: int = 10):
+def get_by_location(db: Session, location_id: int, limit: int = 50):
     return db.query(Review)\
+             .options(joinedload(Review.user))\
              .filter(Review.location_id == location_id)\
              .order_by(Review.created_at.desc())\
              .limit(limit).all()
