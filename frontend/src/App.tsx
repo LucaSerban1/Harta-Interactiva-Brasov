@@ -12,17 +12,29 @@ function MapWrapper() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const loadLocations = async () => {
+    try {
+      const data = await fetchLocations();
+      setLocations(data);
+    } catch {
+      setError('Nu s-a putut conecta la server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchLocations()
-      .then(data => setLocations(data))
-      .catch(() => setError('Nu s-a putut conecta la server'))
-      .finally(() => setLoading(false));
+    loadLocations();
   }, []);
+
+  const handleRefresh = async () => {
+    await loadLocations();
+  };
 
   if (loading) return <p style={{ padding: '2rem' }}>Se încarcă harta...</p>;
   if (error) return <p style={{ padding: '2rem', color: 'red' }}>{error}</p>;
 
-  return <MapView locations={locations} />;
+  return <MapView locations={locations} onRefresh={handleRefresh} />;
 }
 
 function App() {
