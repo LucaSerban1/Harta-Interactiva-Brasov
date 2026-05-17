@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
-class ReviewIn(BaseModel):
-    location_id: int
-    rating: float = Field(ge=1, le=5)        
-    text: str = Field(min_length=10, max_length=1000)  
+class ReviewerInfo(BaseModel):
+    id: int
+    username: str
+    is_admin: bool
+
+    model_config = {"from_attributes": True}
 
 class ReviewOut(BaseModel):
     id: int
@@ -14,5 +16,11 @@ class ReviewOut(BaseModel):
     rating: float
     text: str
     created_at: datetime
+    user: Optional[ReviewerInfo] = None 
 
     model_config = {"from_attributes": True}
+
+class ReviewIn(BaseModel):
+    location_id: int
+    rating: float = Field(ge=1, le=5)
+    text: str = Field(min_length=10, max_length=1000)

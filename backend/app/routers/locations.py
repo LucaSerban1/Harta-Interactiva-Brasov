@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from app.database import get_db
 from app.crud import locations as crud_locations
-from app.schemas.location import LocationOut, LocationCreate
+from app.schemas.location import LocationOut, LocationCreate, LocationDetail
 
 router = APIRouter()
+
 
 @router.get("/", response_model=list[LocationOut])
 def get_locations(
@@ -17,9 +18,9 @@ def get_locations(
         return crud_locations.search(db, keyword=q, category=category)
     return crud_locations.get_all(db)
 
-@router.get("/{location_id}", response_model=LocationOut)
+@router.get("/{location_id}", response_model=LocationDetail)
 def get_location(location_id: int, db: Session = Depends(get_db)):
-    location = crud_locations.get_by_id(db, location_id)
+    location = crud_locations.get_by_id_with_reviews(db, location_id)
     if not location:
         raise HTTPException(status_code=404, detail="Locația nu există")
     return location
@@ -36,22 +37,15 @@ def create_location(location: LocationCreate, db: Session = Depends(get_db)):
         tags=location.tags
     )
 
-@router.patch("/{location_id}")
+@router.patch("/{location_id}", response_model=LocationOut)
 def update_location(
     location_id: int,
     data: dict,
     db: Session = Depends(get_db)
 ):
-    location = crud_locations.get_by_id(db, location_id)
+    location = crud_locations.update(db, location_id, data)
     if not location:
         raise HTTPException(status_code=404, detail="Locația nu există")
-
-    for key, value in data.items():
-        if hasattr(location, key):
-            setattr(location, key, value)
-
-    db.commit()
-    db.refresh(location)
     return location
 
 @router.delete("/{location_id}")
@@ -59,10 +53,7 @@ def delete_location(
     location_id: int,
     db: Session = Depends(get_db)
 ):
-    location = crud_locations.get_by_id(db, location_id)
+    location = crud_locations.delete(db, location_id)
     if not location:
         raise HTTPException(status_code=404, detail="Locația nu există")
-
-    db.delete(location)
-    db.commit()
     return {"message": "Locație ștearsă"}

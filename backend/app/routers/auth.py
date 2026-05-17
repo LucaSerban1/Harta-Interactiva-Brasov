@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Security
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from authlib.integrations.httpx_client import AsyncOAuth2Client
@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import os
 from app.database import get_db
 from app.models.user import User
+from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -29,15 +30,6 @@ def create_jwt_token(user_id: int, email: str, is_admin: bool) -> str:
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
-def get_current_user(token: str, db: Session):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user = db.query(User).filter(User.id == int(payload["sub"])).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="User negăsit")
-        return user
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token invalid")
 
 @router.get("/login")
 async def login():
@@ -88,14 +80,10 @@ async def callback(code: str, db: Session = Depends(get_db)):
     return RedirectResponse(frontend_url)
 
 @router.get("/me")
-async def get_me(authorization: str, db: Session = Depends(get_db)):
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Format token invalid")
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
+async def get_me(current_user: User = Security(get_current_user)):
     return {
-        "id": user.id,
-        "email": user.email,
-        "username": user.username,
-        "is_admin": user.is_admin
+        "id": current_user.id,
+        "email": current_user.email,
+        "username": current_user.username,
+        "is_admin": current_user.is_admin
     }

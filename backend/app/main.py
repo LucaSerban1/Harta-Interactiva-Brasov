@@ -6,12 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import locations, reviews, auth
 from app.models import location, reviews as reviews_model, user
 from app.routers import ai
+from fastapi.security import HTTPBearer
+from app.routers import locations, reviews, auth, favorite
+from app.models import location, reviews as reviews_model, user, favorite as favorite_model
 
 app = FastAPI(
     title="Harta Interactiva Brasov API",
     description="API pentru harta interactivă a Brașovului",
-    version="1.0.0"
+    version="1.0.0",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
+
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +31,7 @@ app.include_router(locations.router, prefix="/locations", tags=["Locații"])
 app.include_router(reviews.router, prefix="/reviews", tags=["Recenzii"])
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(ai.router)
+app.include_router(favorite.router, prefix="/favorites", tags=["Favorite"])
 
 @app.get("/")
 async def root():

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+from app.schemas.review import ReviewOut
 
 class LocationBase(BaseModel):
     name: str
@@ -16,5 +17,10 @@ class LocationOut(LocationBase):
     id: int
     rating_avg: float
     is_verified: bool
+
+    model_config = {"from_attributes": True}
+
+class LocationDetail(LocationOut):
+    reviews: List[ReviewOut] = []
 
     model_config = {"from_attributes": True}
