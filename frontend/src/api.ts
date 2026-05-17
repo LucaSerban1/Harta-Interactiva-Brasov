@@ -23,3 +23,27 @@ export async function fetchLocationById(id: number) {
   if (!res.ok) throw new Error('Eroare la fetch location');
   return res.json();
 }
+
+export interface AIResponse {
+  mesaj?: string;
+  location_id?: number | null;
+  start_location_id?: number | null;
+  eroare_detaliata?: string;
+  error?: string;
+}
+
+export async function fetchAIRecommendation(prompt: string): Promise<AIResponse> {
+  const res = await fetch(`${BASE_URL}/api/ai/recommend?prompt_user=${encodeURIComponent(prompt)}`);
+  if (!res.ok) throw new Error('Eroare la conectarea cu AI-ul');
+  return res.json();
+}
+
+export async function sendChatMessage(messages: {role: string, content: string}[]): Promise<AIResponse> {
+  const res = await fetch(`${BASE_URL}/api/ai/chat`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ messages })
+  });
+  if (!res.ok) throw new Error('Eroare la conectarea cu AI-ul');
+  return res.json();
+}
