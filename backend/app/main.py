@@ -8,7 +8,7 @@ from app.models import location, reviews as reviews_model, user
 from app.routers import ai
 from fastapi.security import HTTPBearer
 from app.routers import locations, reviews, auth, favorite
-from app.models import location, reviews as reviews_model, user, favorite as favorite_model
+from app.models import location, reviews as reviews_model, user, favorite as favorite_model, review_report as review_report_model
 
 app = FastAPI(
     title="Harta Interactiva Brasov API",

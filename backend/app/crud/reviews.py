@@ -6,6 +6,21 @@ from app.models.location import Location
 
 ALLOWED_TAGS = []
 
+def get_by_id(db: Session, review_id: int):
+    return db.query(Review).filter(Review.id == review_id).first()
+
+def get_by_user(db: Session, user_id: int, limit: int = 100):
+    reviews = db.query(Review)\
+                .options(joinedload(Review.location))\
+                .filter(Review.user_id == user_id)\
+                .order_by(Review.created_at.desc())\
+                .limit(limit).all()
+    result = []
+    for r in reviews:
+        r.location_name = r.location.name if r.location else None
+        result.append(r)
+    return result
+
 def get_by_location(db: Session, location_id: int, limit: int = 50):
     return db.query(Review)\
              .options(joinedload(Review.user))\

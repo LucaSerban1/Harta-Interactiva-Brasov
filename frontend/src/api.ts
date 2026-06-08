@@ -47,3 +47,20 @@ export async function sendChatMessage(messages: {role: string, content: string}[
   if (!res.ok) throw new Error('Eroare la conectarea cu AI-ul');
   return res.json();
 }
+
+export async function fetchReviewsByLocation(locationId: number) {
+  const res = await fetch(`${BASE_URL}/reviews/${locationId}`, {
+    headers: getHeaders()
+  });
+  if (!res.ok) throw new Error('Eroare la fetch reviews');
+  return res.json();
+}
+
+export async function reportReview(reviewId: number, reason: string) {
+  const res = await fetch(`${BASE_URL}/reviews/${reviewId}/report`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ reason })
+  });
+  return res;
+}

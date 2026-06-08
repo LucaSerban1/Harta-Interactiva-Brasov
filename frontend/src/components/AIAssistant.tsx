@@ -29,6 +29,11 @@ export default function AIAssistant({ onSelectLocation, onSelectRoute, onRefresh
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const onSelectLocationRef = useRef(onSelectLocation);
+  const onSelectRouteRef = useRef(onSelectRoute);
+
+  useEffect(() => { onSelectLocationRef.current = onSelectLocation; }, [onSelectLocation]);
+  useEffect(() => { onSelectRouteRef.current = onSelectRoute; }, [onSelectRoute]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -78,12 +83,12 @@ export default function AIAssistant({ onSelectLocation, onSelectRoute, onRefresh
         if (onRefresh) await onRefresh();
       }
 
-      if (data.start_location_id && data.location_id && onSelectRoute) {
-        onSelectRoute(data.start_location_id, data.location_id);
-      } else if (data.location_id && onSelectLocation) {
+      if (data.start_location_id && data.location_id && onSelectRouteRef.current) {
+        onSelectRouteRef.current(data.start_location_id, data.location_id);
+      } else if (data.location_id && onSelectLocationRef.current) {
         setTimeout(() => {
-          onSelectLocation(data.location_id);
-        }, 100);
+          onSelectLocationRef.current!(data.location_id);
+        }, 300);
       }
     } catch (e: unknown) {
       setMessages(prev => [...prev, { 

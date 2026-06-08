@@ -1,5 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Location } from '../mockData';
+import { fetchReviewsByLocation, reportReview } from '../api';
+
+interface ApiReview {
+  id: number;
+  user_id: number;
+  rating: number;
+  text: string;
+  created_at: string;
+  user?: { id: number; username: string; is_admin: boolean };
+}
 
 interface Props {
   location: Location;
@@ -8,9 +18,55 @@ interface Props {
 
 export default function LocationPanel({ location, onClose }: Props) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
+  const [reportingId, setReportingId] = useState<number | null>(null);
+  const [reason, setReason] = useState('');
+  const [msg, setMsg] = useState('');
+
   const photos = location.photos ?? [];
-  const reviews = location.reviews ?? [];
   const rating = location.rating_avg ?? location.rating ?? 0;
+
+  const currentUserId = (() => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      return parseInt(JSON.parse(atob(token.split('.')[1])).sub);
+    } catch { return null; }
+  })();
+
+  useEffect(() => {
+    setReviews([]);
+    setReportingId(null);
+    setReason('');
+    setMsg('');
+    fetchReviewsByLocation(location.id).then(setReviews).catch(() => {});
+  }, [location.id]);
+
+  const handleReport = async (reviewId: number) => {
+    if (!reason.trim()) return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setMsg('Trebuie să fii logat pentru a raporta.');
+      return;
+    }
+    const res = await reportReview(reviewId, reason.trim());
+    if (res.status === 201) {
+      setMsg('Recenzie raportată cu succes!');
+      setReportingId(null);
+      setReason('');
+    } else if (res.status === 409) {
+      setMsg('Ai raportat deja această recenzie.');
+      setReportingId(null);
+    } else if (res.status === 400) {
+      setMsg('Nu poți raporta propria recenzie.');
+      setReportingId(null);
+    } else if (res.status === 401) {
+      setMsg('Trebuie să fii logat pentru a raporta.');
+      setReportingId(null);
+    } else {
+      setMsg('Eroare la raportare.');
+    }
+  };
 
   return (
     <div style={{
@@ -40,11 +96,7 @@ export default function LocationPanel({ location, onClose }: Props) {
 
       {photos.length > 0 && (
         <div style={{ marginBottom: '1rem' }}>
-          <img
-            src={photos[photoIndex]}
-            alt="foto"
-            style={{ width: '100%', borderRadius: '8px' }}
-          />
+          <img src={photos[photoIndex]} alt="foto" style={{ width: '100%', borderRadius: '8px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
             <button onClick={() => setPhotoIndex(i => Math.max(0, i - 1))} disabled={photoIndex === 0}>◀ Prev</button>
             <span>{photoIndex + 1} / {photos.length}</span>
@@ -54,19 +106,69 @@ export default function LocationPanel({ location, onClose }: Props) {
       )}
 
       <h3>Review-uri</h3>
+      {msg && (
+        <p style={{ fontSize: '13px', color: msg.includes('succes') ? 'green' : 'red', marginBottom: '0.5rem' }}>{msg}</p>
+      )}
       {reviews.length === 0 ? (
-        <p style={{ color: '#000000' }}>Nu există review-uri încă.</p>
+        <p style={{ color: '#000' }}>Nu există review-uri încă.</p>
       ) : (
         reviews.slice(0, 10).map(review => (
           <div key={review.id} style={{
             borderTop: '1px solid #eee', paddingTop: '0.5rem', marginTop: '0.5rem'
           }}>
-            <strong>{review.user}</strong> — ⭐ {review.rating}
-            <p style={{ margin: '4px 0',color: 'black' }}>{review.text}</p>
-            <small style={{ color: '#aaa' }}>{review.date}</small>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong>{review.user?.username ?? `User #${review.user_id}`}</strong>
+              <span>⭐ {review.rating}</span>
+            </div>
+            <p style={{ margin: '4px 0', color: 'black' }}>{review.text}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <small style={{ color: '#aaa' }}>{new Date(review.created_at).toLocaleDateString('ro-RO')}</small>
+              {currentUserId !== review.user_id && (
+                <button
+                  onClick={() => { setReportingId(review.id); setReason(''); setMsg(''); }}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#dc2626', fontSize: '12px', padding: '2px 6px'
+                  }}
+                >🚩 Raportează</button>
+              )}
+            </div>
+
+            {reportingId === review.id && (
+              <div style={{ marginTop: '0.5rem', background: '#fef2f2', borderRadius: '8px', padding: '0.75rem' }}>
+                <p style={{ margin: '0 0 0.4rem', fontSize: '13px', color: '#7f1d1d', fontWeight: 600 }}>Motiv raportare:</p>
+                <textarea
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  placeholder="Descrie de ce raportezi această recenzie..."
+                  style={{
+                    width: '100%', height: '70px', resize: 'none', borderRadius: '6px',
+                    border: '1px solid #fca5a5', padding: '0.4rem', fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                  <button
+                    onClick={() => handleReport(review.id)}
+                    disabled={!reason.trim()}
+                    style={{
+                      flex: 1, background: '#dc2626', color: 'white', border: 'none',
+                      borderRadius: '6px', padding: '0.4rem', cursor: 'pointer', fontSize: '13px'
+                    }}
+                  >Trimite raport</button>
+                  <button
+                    onClick={() => { setReportingId(null); setReason(''); }}
+                    style={{
+                      flex: 1, background: '#e5e7eb', color: '#333', border: 'none',
+                      borderRadius: '6px', padding: '0.4rem', cursor: 'pointer', fontSize: '13px'
+                    }}
+                  >Anulează</button>
+                </div>
+              </div>
+            )}
           </div>
         ))
       )}
     </div>
   );
-} 
+}
