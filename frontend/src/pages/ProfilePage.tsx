@@ -13,6 +13,8 @@ interface Review {
   text: string;
   rating: number;
   location_id: number;
+  location_name?: string;
+  created_at: string;
 }
 
 interface Location {
@@ -32,6 +34,13 @@ export default function ProfilePage() {
   const [msg, setMsg] = useState('');
   const navigate = useNavigate();
 
+  const fetchReviews = async (token: string) => {
+    const res = await fetch('http://localhost:8000/reviews/my', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) setReviews(await res.json());
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/'); return; }
@@ -42,6 +51,8 @@ export default function ProfilePage() {
 
     fetch('http://localhost:8000/locations/')
       .then(r => r.json()).then(setLocations);
+
+    fetchReviews(token);
   }, []);
 
   const handleAddReview = async () => {
@@ -65,6 +76,7 @@ export default function ProfilePage() {
     if (res.ok) {
       setMsg('Review adăugat!');
       setNewReview({ location_id: '', text: '', rating: 5 });
+      fetchReviews(token!);
     } else {
       setMsg('Eroare la adăugare.');
     }
@@ -198,6 +210,27 @@ export default function ProfilePage() {
                 cursor: 'pointer', fontSize: '14px'
               }}>Trimite review</button>
               {msg && <p style={{ marginTop: '0.5rem', color: msg.includes('Eroare') ? 'red' : 'green', fontSize: '13px' }}>{msg}</p>}
+
+              <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Istoricul meu</h3>
+              {reviews.length === 0 ? (
+                <p style={{ color: '#888', textAlign: 'center', fontSize: '14px' }}>Nu ai recenzii încă.</p>
+              ) : (
+                reviews.map(r => (
+                  <div key={r.id} style={{
+                    padding: '0.75rem', borderRadius: '8px', background: '#f9f9f9',
+                    marginBottom: '0.5rem', borderLeft: '3px solid #2563eb'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px' }}>{r.location_name ?? `Locație #${r.location_id}`}</span>
+                      <span style={{ fontSize: '13px' }}>{'⭐'.repeat(r.rating)}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#444' }}>{r.text}</p>
+                    <span style={{ fontSize: '11px', color: '#aaa' }}>
+                      {new Date(r.created_at).toLocaleDateString('ro-RO')}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           )}
 

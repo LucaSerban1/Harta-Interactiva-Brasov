@@ -17,15 +17,34 @@ interface Stats {
   reviews: number;
 }
 
+interface Report {
+  id: number;
+  review_id: number;
+  reason: string;
+  created_at: string;
+  review_text?: string;
+  reporter?: { id: number; username: string; is_admin: boolean };
+}
+
 const BASE = 'http://localhost:8000';
 
 export default function AdminPage() {
   const [locations, setLocations] = useState<Location[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<Stats>({ locations: 0, reviews: 0 });
   const [form, setForm] = useState({
     name: '', lat: '', lng: '', category: '', description: '', tags: ''
   });
   const [msg, setMsg] = useState('');
+
+  const token = localStorage.getItem('token');
+  const authHeaders = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+  const loadReports = () => {
+    fetch(`${BASE}/reviews/reports`, { headers: authHeaders })
+      .then(r => r.ok ? r.json() : [])
+      .then(setReports);
+  };
 
   const loadLocations = () => {
     fetch(`${BASE}/locations/`)
@@ -36,12 +55,24 @@ export default function AdminPage() {
       });
   };
 
-  useEffect(() => { loadLocations(); }, []);
+  useEffect(() => { loadLocations(); loadReports(); }, []);
 
   const handleDelete = async (id: number) => {
     if (!confirm('Sigur vrei să ștergi?')) return;
     await fetch(`${BASE}/locations/${id}`, { method: 'DELETE' });
     loadLocations();
+  };
+
+  const handleDismissReport = async (reportId: number) => {
+    await fetch(`${BASE}/reviews/reports/${reportId}`, { method: 'DELETE', headers: authHeaders });
+    loadReports();
+  };
+
+  const handleDeleteReview = async (reviewId: number, reportId: number) => {
+    if (!confirm('Ștergi recenzia și raportul?')) return;
+    await fetch(`${BASE}/reviews/${reviewId}`, { method: 'DELETE', headers: authHeaders });
+    await fetch(`${BASE}/reviews/reports/${reportId}`, { method: 'DELETE', headers: authHeaders });
+    loadReports();
   };
 
   const handleApprove = async (id: number) => {
@@ -128,6 +159,42 @@ export default function AdminPage() {
         }}>Adaugă locație</button>
         {msg && <span style={{ marginLeft: '1rem', color: msg.includes('Eroare') ? 'red' : 'green' }}>{msg}</span>}
       </div>
+
+      {/* Rapoarte recenzii */}
+      <h2 style={{ color: 'black', marginTop: '2rem' }}>🚩 Recenzii raportate ({reports.length})</h2>
+      {reports.length === 0 ? (
+        <p style={{ color: '#888' }}>Nu există rapoarte momentan.</p>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '2rem' }}>
+          <thead>
+            <tr style={{ background: '#fef2f2' }}>
+              {['Raportat de', 'Recenzie', 'Motiv', 'Data', 'Acțiuni'].map(h => (
+                <th key={h} style={{ padding: '0.6rem', textAlign: 'left', borderBottom: '1px solid #fca5a5', color: 'black' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {reports.map(rep => (
+              <tr key={rep.id} style={{ borderBottom: '1px solid #fee2e2' }}>
+                <td style={{ padding: '0.6rem', color: 'black' }}>{rep.reporter?.username ?? '—'}</td>
+                <td style={{ padding: '0.6rem', color: '#444', maxWidth: '200px' }}>{rep.review_text ?? `#${rep.review_id}`}</td>
+                <td style={{ padding: '0.6rem', color: 'black' }}>{rep.reason}</td>
+                <td style={{ padding: '0.6rem', color: '#888', whiteSpace: 'nowrap' }}>{new Date(rep.created_at).toLocaleDateString('ro-RO')}</td>
+                <td style={{ padding: '0.6rem', display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => handleDismissReport(rep.id)} style={{
+                    background: '#6b7280', color: 'white', border: 'none',
+                    padding: '0.3rem 0.7rem', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'
+                  }}>Ignoră</button>
+                  <button onClick={() => handleDeleteReview(rep.review_id, rep.id)} style={{
+                    background: '#dc2626', color: 'white', border: 'none',
+                    padding: '0.3rem 0.7rem', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'
+                  }}>Șterge recenzia</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {/* Tabel locații */}
       <h2 style={{ color: 'black' }}>📍 Toate locațiile ({locations.length})</h2>

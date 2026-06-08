@@ -2,13 +2,19 @@ from fastapi import APIRouter, Depends
 import logging
 import json
 import re
+import os
 import httpx
 from urllib.parse import unquote
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
+from dotenv import load_dotenv
 from app.database import get_db
 from app.crud import locations as crud_locations
+from app.dependencies import get_optional_user
+from app.models.user import User
+
+load_dotenv()
 
 class ChatMessage(BaseModel):
     role: str
@@ -22,8 +28,7 @@ router = APIRouter(prefix="/api/ai", tags=["AI Recommendations"])
 try:
     from groq import Groq
 
-    # PUNE CHEIA TA AICI:
-    client = Groq(api_key="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")
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 except ImportError:
     client = None
 
@@ -81,26 +86,35 @@ def process_google_maps_link(url: str, db: Session, client) -> Optional[dict]:
         return None
 
 @router.post("/chat")
-def ai_chat(request: ChatRequest, db: Session = Depends(get_db)):
+def ai_chat(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
     if client is None:
         return {"error": "Libraria groq nu este instalata! Ruleaza 'pip install groq' in terminal."}
 
     try:
         locatii = crud_locations.get_all(db)
-        
+
         # Verificare linkuri Google Maps in ultimul mesaj
         refresh_locations = False
         new_location_msg = ""
         if request.messages:
             last_msg = request.messages[-1].content
             urls = re.findall(r'https?://(?:www\.)?google\.com/maps[^\s]+|https?://(?:maps\.)?app\.goo\.gl/[^\s]+', last_msg)
-            for url in urls:
-                new_loc = process_google_maps_link(url, db, client)
-                if new_loc:
-                    refresh_locations = True
-                    new_location_msg += f"\nSISTEM: AI DETECTAT UN LINK GOOGLE MAPS. Locația '{new_loc.name}' a fost adăugată automat pe hartă cu ID-ul {new_loc.id}. Este OBLIGATORIU să îi confirmi utilizatorului că ai adăugat locația pe hartă, să îi prezinți descrierea ei și să o folosești ca 'location_id'."
-                    # Re-preluam locatiile pentru a include pe cea noua
-                    locatii = crud_locations.get_all(db)
+            if urls:
+                if not current_user:
+                    new_location_msg = "\nSISTEM: Utilizatorul a trimis un link Google Maps, dar NU este autentificat. Informează-l că trebuie să fie logat și să aibă cont de admin pentru a adăuga locații."
+                elif not current_user.is_admin:
+                    new_location_msg = "\nSISTEM: Utilizatorul a trimis un link Google Maps, dar NU are drepturi de admin. Informează-l că doar adminii pot adăuga locații noi prin link."
+                else:
+                    for url in urls:
+                        new_loc = process_google_maps_link(url, db, client)
+                        if new_loc:
+                            refresh_locations = True
+                            new_location_msg += f"\nSISTEM: AI DETECTAT UN LINK GOOGLE MAPS. Locația '{new_loc.name}' a fost adăugată automat pe hartă cu ID-ul {new_loc.id}. Este OBLIGATORIU să îi confirmi utilizatorului că ai adăugat locația pe hartă, să îi prezinți descrierea ei și să o folosești ca 'location_id'."
+                            locatii = crud_locations.get_all(db)
 
         # Formatam locatiile pentru a fi compacte pentru prompt
         date_context = [
