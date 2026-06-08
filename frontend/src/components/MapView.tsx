@@ -110,25 +110,22 @@ export default function MapView({ locations = mockLocations, onRefresh }: Props)
       <SearchBar value={search} onChange={setSearch} />
       {!selected && <FilterBar selected={category} onChange={setCategory} />}
       {!selected && (
-        <a
-          href="http://localhost:8000/auth/login"
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            zIndex: 9999,
-            background: '#2563eb',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontSize: '14px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-          }}
-        >
-          🔐 Login
-        </a>
-      )}
+  localStorage.getItem('token')
+    ? <a href="/profile" style={{
+        position: 'fixed', top: '1rem', right: '1rem',
+        zIndex: 9999, background: '#2563eb', color: 'white',
+        padding: '0.5rem 1rem', borderRadius: '8px',
+        textDecoration: 'none', fontSize: '14px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+      }}>👤 Profil</a>
+    : <a href="http://localhost:8000/auth/login" style={{
+        position: 'fixed', top: '1rem', right: '1rem',
+        zIndex: 9999, background: '#2563eb', color: 'white',
+        padding: '0.5rem 1rem', borderRadius: '8px',
+        textDecoration: 'none', fontSize: '14px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+      }}>🔐 Login</a>
+)}
 
       {routeCoords.length > 0 && (
         <button
