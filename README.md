@@ -1,73 +1,89 @@
-# React + TypeScript + Vite
+# Harta Interactivă Brașov
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O aplicație web interactivă pentru explorarea orașului Brașov — locații, recenzii, favorite și un ghid AI local.
 
-Currently, two official plugins are available:
+## Tehnologii
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Frontend:** React 19, TypeScript, Vite, React-Leaflet  
+**Backend:** FastAPI, SQLAlchemy, PostgreSQL, Alembic  
+**AI:** Groq API (Llama 3.1)  
+**Auth:** Google OAuth 2.0 + JWT
 
-## React Compiler
+## Funcționalități
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Hartă interactivă** cu locații din Brașov (cafenele, parcuri, restaurante, obiective turistice etc.)
+- **Filtrare și căutare** după nume, categorie sau taguri
+- **Recenzii** — adaugă, vizualizează și șterge recenzii cu rating
+- **Raportare recenzii** — raportează conținut nepotrivit; adminii pot gestiona rapoartele
+- **Favorite** — salvează locații preferate și le vizualizezi în profilul tău
+- **Istoric recenzii** — vezi toate recenziile scrise de tine
+- **Ghid AI local** — asistent conversațional care recomandă locații, trasee și poate adăuga locații noi prin link Google Maps (doar admini)
+- **Admin Panel** — gestionează locații, aprobă, șterge și moderează rapoarte
+- **Autentificare Google** — login cu cont Google
 
-## Expanding the ESLint configuration
+## Rulare locală
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Cerințe
+- Docker Desktop
+- Node.js 18+
+- Python 3.11+
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Baza de date
+```bash
+docker compose up -d
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Backend
+```bash
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1   # Windows
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Backend disponibil la `http://localhost:8000`  
+Documentație API: `http://localhost:8000/docs`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 3. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend disponibil la `http://localhost:5173`
+
+### 4. Variabile de mediu
+
+Creează fișierul `backend/.env`:
+
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/callback
+SECRET_KEY=...
+GROQ_API_KEY=...
+ALLOWED_DOMAINS=gmail.com,s.unibuc.ro,unibuc.ro
+```
+
+## Structura proiectului
+
+```
+├── backend/
+│   ├── app/
+│   │   ├── models/        # Modele SQLAlchemy
+│   │   ├── schemas/       # Scheme Pydantic
+│   │   ├── crud/          # Logică acces date
+│   │   ├── routers/       # Endpoint-uri FastAPI
+│   │   └── main.py
+│   ├── alembic/           # Migrații bază de date
+│   └── requirements.txt
+├── frontend/
+│   └── src/
+│       ├── components/    # MapView, LocationPanel, AIAssistant etc.
+│       ├── pages/         # ProfilePage, AdminPage, AuthCallback
+│       └── api.ts
+└── docker-compose.yml
 ```
