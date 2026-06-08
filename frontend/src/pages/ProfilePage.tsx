@@ -41,6 +41,13 @@ export default function ProfilePage() {
     if (res.ok) setReviews(await res.json());
   };
 
+  const fetchFavorites = async (token: string) => {
+    const res = await fetch('http://localhost:8000/favorites/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) setFavorites(await res.json());
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/'); return; }
@@ -53,6 +60,7 @@ export default function ProfilePage() {
       .then(r => r.json()).then(setLocations);
 
     fetchReviews(token);
+    fetchFavorites(token);
   }, []);
 
   const handleAddReview = async () => {
