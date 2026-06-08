@@ -48,6 +48,23 @@ export async function sendChatMessage(messages: {role: string, content: string}[
   return res.json();
 }
 
+export async function checkFavorite(locationId: number): Promise<boolean> {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  const res = await fetch(`${BASE_URL}/favorites/check/${locationId}`, { headers: getHeaders() });
+  if (!res.ok) return false;
+  const data = await res.json();
+  return data.is_favorite;
+}
+
+export async function addFavorite(locationId: number) {
+  return fetch(`${BASE_URL}/favorites/${locationId}`, { method: 'POST', headers: getHeaders() });
+}
+
+export async function removeFavorite(locationId: number) {
+  return fetch(`${BASE_URL}/favorites/${locationId}`, { method: 'DELETE', headers: getHeaders() });
+}
+
 export async function fetchReviewsByLocation(locationId: number) {
   const res = await fetch(`${BASE_URL}/reviews/${locationId}`, {
     headers: getHeaders()

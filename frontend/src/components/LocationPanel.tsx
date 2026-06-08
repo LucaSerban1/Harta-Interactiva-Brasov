@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Location } from '../mockData';
-import { fetchReviewsByLocation, reportReview } from '../api';
+import { fetchReviewsByLocation, reportReview, checkFavorite, addFavorite, removeFavorite } from '../api';
 
 interface ApiReview {
   id: number;
@@ -22,6 +22,8 @@ export default function LocationPanel({ location, onClose }: Props) {
   const [reportingId, setReportingId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   const photos = location.photos ?? [];
   const rating = location.rating_avg ?? location.rating ?? 0;
@@ -40,7 +42,22 @@ export default function LocationPanel({ location, onClose }: Props) {
     setReason('');
     setMsg('');
     fetchReviewsByLocation(location.id).then(setReviews).catch(() => {});
+    checkFavorite(location.id).then(setIsFavorite);
   }, [location.id]);
+
+  const handleToggleFavorite = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setMsg('Trebuie să fii logat pentru a adăuga la favorite.'); return; }
+    setFavLoading(true);
+    if (isFavorite) {
+      await removeFavorite(location.id);
+      setIsFavorite(false);
+    } else {
+      await addFavorite(location.id);
+      setIsFavorite(true);
+    }
+    setFavLoading(false);
+  };
 
   const handleReport = async (reviewId: number) => {
     if (!reason.trim()) return;
@@ -80,7 +97,23 @@ export default function LocationPanel({ location, onClose }: Props) {
       <h2 style={{ marginTop: 0, color: 'black' }}>{location.name}</h2>
       {location.address && <p style={{ color: '#666' }}>{location.address}</p>}
       {location.description && <p style={{ color: '#444' }}>{location.description}</p>}
-      <p>⭐ {rating} · <span style={{ color: '#888' }}>{location.category}</span></p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+        <p style={{ margin: 0 }}>⭐ {rating} · <span style={{ color: '#888' }}>{location.category}</span></p>
+        <button
+          onClick={handleToggleFavorite}
+          disabled={favLoading}
+          style={{
+            background: isFavorite ? '#fee2e2' : '#f3f4f6',
+            color: isFavorite ? '#dc2626' : '#555',
+            border: 'none', borderRadius: '20px',
+            padding: '0.3rem 0.8rem', cursor: 'pointer',
+            fontSize: '13px', fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+        >
+          {isFavorite ? '❤️ Favorit' : '🤍 Adaugă la favorite'}
+        </button>
+      </div>
 
       {location.tags && (
         <div style={{ marginBottom: '1rem' }}>
