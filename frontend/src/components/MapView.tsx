@@ -108,8 +108,7 @@ export default function MapView({ locations = mockLocations, onRefresh }: Props)
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <SearchBar value={search} onChange={setSearch} />
-      <FilterBar selected={category} onChange={setCategory} />
-
+      {!selected && <FilterBar selected={category} onChange={setCategory} />}
       {!selected && (
         <a
           href="http://localhost:8000/auth/login"
