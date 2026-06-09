@@ -87,7 +87,7 @@ export default function AIAssistant({ onSelectLocation, onSelectRoute, onRefresh
         onSelectRouteRef.current(data.start_location_id, data.location_id);
       } else if (data.location_id && onSelectLocationRef.current) {
         setTimeout(() => {
-          onSelectLocationRef.current!(data.location_id);
+          onSelectLocationRef.current!(data.location_id as number);
         }, 300);
       }
     } catch {

@@ -30,6 +30,7 @@ export interface AIResponse {
   start_location_id?: number | null;
   eroare_detaliata?: string;
   error?: string;
+  refresh_locations?: boolean | string;
 }
 
 export async function fetchAIRecommendation(prompt: string): Promise<AIResponse> {
