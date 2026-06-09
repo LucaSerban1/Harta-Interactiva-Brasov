@@ -68,6 +68,157 @@ GROQ_API_KEY=...
 ALLOWED_DOMAINS=gmail.com,s.unibuc.ro,unibuc.ro
 ```
 
+## Diagrame UML
+
+### Class Diagram — Modele
+
+```mermaid
+classDiagram
+    class User {
+        +int id
+        +String email
+        +String username
+        +String hashed_password
+        +Boolean is_active
+        +Boolean is_admin
+        +DateTime created_at
+    }
+
+    class Location {
+        +int id
+        +String name
+        +Float lat
+        +Float lng
+        +String category
+        +String description
+        +Float rating_avg
+        +Boolean is_verified
+        +String[] tags
+    }
+
+    class Review {
+        +int id
+        +int location_id
+        +int user_id
+        +Float rating
+        +String text
+        +DateTime created_at
+    }
+
+    class Favorite {
+        +int id
+        +int user_id
+        +int location_id
+        +DateTime created_at
+    }
+
+    class ReviewReport {
+        +int id
+        +int review_id
+        +int reporter_id
+        +String reason
+        +DateTime created_at
+    }
+
+    User "1" --> "0..*" Review : scrie
+    User "1" --> "0..*" Favorite : salvează
+    User "1" --> "0..*" ReviewReport : raportează
+    Location "1" --> "0..*" Review : primește
+    Location "1" --> "0..*" Favorite : apare în
+    Review "1" --> "0..*" ReviewReport : este raportat prin
+```
+
+### Sequence Diagram — Autentificare Google OAuth
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant Google
+    participant DB
+
+    User->>Frontend: Click "Login"
+    Frontend->>Backend: GET /auth/login
+    Backend-->>Frontend: Redirect → Google OAuth URL
+    Frontend->>Google: Redirect cu client_id + scope
+    User->>Google: Autentificare cu cont Google
+    Google-->>Backend: Redirect /auth/callback?code=...
+    Backend->>Google: POST /token (exchange code)
+    Google-->>Backend: access_token
+    Backend->>Google: GET /userinfo
+    Google-->>Backend: email, name
+    Backend->>DB: Caută user după email
+    alt User nou
+        DB-->>Backend: null
+        Backend->>DB: INSERT user
+    else User existent
+        DB-->>Backend: User
+    end
+    Backend->>Backend: Generează JWT (24h)
+    Backend-->>Frontend: Redirect /auth/callback?token=JWT
+    Frontend->>Frontend: Salvează token în localStorage
+    Frontend-->>User: Redirecționat la hartă
+```
+
+### ER Diagram — Baza de date
+
+```mermaid
+erDiagram
+    users {
+        int id PK
+        string email
+        string username
+        string hashed_password
+        boolean is_active
+        boolean is_admin
+        datetime created_at
+    }
+
+    locations {
+        int id PK
+        string name
+        float lat
+        float lng
+        string category
+        string description
+        float rating_avg
+        boolean is_verified
+        string[] tags
+    }
+
+    reviews {
+        int id PK
+        int location_id FK
+        int user_id FK
+        float rating
+        string text
+        datetime created_at
+    }
+
+    favorites {
+        int id PK
+        int user_id FK
+        int location_id FK
+        datetime created_at
+    }
+
+    review_reports {
+        int id PK
+        int review_id FK
+        int reporter_id FK
+        string reason
+        datetime created_at
+    }
+
+    users ||--o{ reviews : "scrie"
+    users ||--o{ favorites : "salvează"
+    users ||--o{ review_reports : "raportează"
+    locations ||--o{ reviews : "primește"
+    locations ||--o{ favorites : "apare în"
+    reviews ||--o{ review_reports : "este raportat prin"
+```
+
 ## Structura proiectului
 
 ```
