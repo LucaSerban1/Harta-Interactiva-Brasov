@@ -90,7 +90,7 @@ export default function AIAssistant({ onSelectLocation, onSelectRoute, onRefresh
           onSelectLocationRef.current!(data.location_id);
         }, 300);
       }
-    } catch (e: unknown) {
+    } catch (_e: unknown) {
       setMessages(prev => [...prev, { 
         id: (Date.now() + 1).toString(), 
         sender: 'ai', 

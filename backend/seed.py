@@ -2,6 +2,8 @@ from app.database import SessionLocal
 from app.models.location import Location
 from app.models.reviews import Review
 from app.models.user import User
+from app.models.favorite import Favorite  # noqa: F401
+from app.models.review_report import ReviewReport  # noqa: F401
 
 def seed():
     db = SessionLocal()
