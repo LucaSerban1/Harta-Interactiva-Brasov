@@ -12,4 +12,5 @@ COPY seed.py .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# rulează migrațiile înainte de a porni serverul (necesită DATABASE_URL setat)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
