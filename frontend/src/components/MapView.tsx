@@ -9,6 +9,7 @@ import SearchBar from './SearchBar';
 import FilterBar from './FilterBar';
 import MapController from './MapController';
 import AIAssistant from './AIAssistant';
+import { BASE_URL } from '../api';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -119,7 +120,7 @@ export default function MapView({ locations = mockLocations, onRefresh }: Props)
         textDecoration: 'none', fontSize: '14px',
         boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
       }}>👤 Profil</a>
-    : <a href="http://localhost:8000/auth/login" style={{
+    : <a href={`${BASE_URL}/auth/login`} style={{
         position: 'fixed', top: '1rem', right: '1rem',
         zIndex: 9999, background: '#2563eb', color: 'white',
         padding: '0.5rem 1rem', borderRadius: '8px',

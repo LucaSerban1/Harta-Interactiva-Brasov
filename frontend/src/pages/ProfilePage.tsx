@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../api';
 
 interface User {
   id: number;
@@ -35,14 +36,14 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const fetchReviews = async (token: string) => {
-    const res = await fetch('http://localhost:8000/reviews/my', {
+    const res = await fetch(`${BASE_URL}/reviews/my`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) setReviews(await res.json());
   };
 
   const fetchFavorites = async (token: string) => {
-    const res = await fetch('http://localhost:8000/favorites/', {
+    const res = await fetch(`${BASE_URL}/favorites/`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) setFavorites(await res.json());
@@ -52,11 +53,11 @@ export default function ProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/'); return; }
 
-    fetch('http://localhost:8000/auth/me', {
+    fetch(`${BASE_URL}/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(r => r.json()).then(setUser);
 
-    fetch('http://localhost:8000/locations/')
+    fetch(`${BASE_URL}/locations/`)
       .then(r => r.json()).then(setLocations);
 
     fetchReviews(token);
@@ -69,7 +70,7 @@ export default function ProfilePage() {
       setMsg('Completează toate câmpurile!');
       return;
     }
-    const res = await fetch('http://localhost:8000/reviews/', {
+    const res = await fetch(`${BASE_URL}/reviews/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

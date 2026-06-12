@@ -16,6 +16,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
 ALLOWED_DOMAINS = os.getenv("ALLOWED_DOMAINS", "s.unibuc.ro,unibuc.ro").split(",")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -76,7 +77,7 @@ async def callback(code: str, db: Session = Depends(get_db)):
 
     token = create_jwt_token(user.id, user.email, user.is_admin)
 
-    frontend_url = f"http://localhost:5173/auth/callback?token={token}"
+    frontend_url = f"{FRONTEND_URL}/auth/callback?token={token}"
     return RedirectResponse(frontend_url)
 
 @router.get("/me")

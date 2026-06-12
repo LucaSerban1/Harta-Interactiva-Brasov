@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BASE_URL } from '../api';
 
 interface Location {
   id: number;
@@ -26,7 +27,7 @@ interface Report {
   reporter?: { id: number; username: string; is_admin: boolean };
 }
 
-const BASE = 'http://localhost:8000';
+const BASE = BASE_URL;
 
 export default function AdminPage() {
   const [locations, setLocations] = useState<Location[]>([]);
