@@ -74,6 +74,9 @@ ALLOWED_DOMAINS=gmail.com,s.unibuc.ro,unibuc.ro
 # opțional — origin-urile permise de CORS, separate prin virgulă
 # (default: http://localhost:5173,http://localhost)
 CORS_ORIGINS=http://localhost:5173,http://localhost
+# opțional — URL-ul frontend-ului, folosit la redirect după login
+# (default: http://localhost:5173)
+FRONTEND_URL=http://localhost:5173
 ```
 
 Frontend-ul citește opțional `VITE_API_URL` (default `http://localhost:8000`) — URL-ul backend-ului, embedat în bundle la build.
