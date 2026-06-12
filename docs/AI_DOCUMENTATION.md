@@ -1,34 +1,34 @@
-# Documentația AI — Ghidul AI local
+# AI Documentation — Local AI Guide
 
-Acest document descrie funcționalitatea AI integrată în aplicație: arhitectura, endpoint-urile, prompt-urile folosite și limitările cunoscute.
+This document describes the AI functionality built into the application: architecture, endpoints, the prompts used and known limitations.
 
-## Prezentare generală
+## Overview
 
-Aplicația include un **asistent conversațional** ("Ghid AI local") care:
+The application includes a **conversational assistant** ("Local AI Guide") that:
 
-1. **Recomandă locații** din Brașov pe baza datelor reale din baza de date (nu inventează locații)
-2. **Identifică trasee** între două locații cerute de utilizator și returnează ID-urile lor pentru desenarea rutei pe hartă
-3. **Adaugă locații noi din link-uri Google Maps** (funcționalitate disponibilă doar adminilor): extrage coordonatele și numele din link, iar AI-ul clasifică automat categoria și generează o descriere
+1. **Recommends locations** in Brașov based on real data from the database (it does not make up locations)
+2. **Identifies routes** between two locations requested by the user and returns their IDs so the route can be drawn on the map
+3. **Adds new locations from Google Maps links** (admin-only feature): it extracts the coordinates and name from the link, then the AI automatically classifies the category and generates a description
 
-## Arhitectură
+## Architecture
 
 ```
 ┌──────────────┐   POST /api/ai/chat    ┌──────────────────┐   chat.completions   ┌─────────────┐
 │ AIAssistant  │ ─────────────────────► │ backend          │ ───────────────────► │ Groq API    │
 │ (React)      │ ◄───────────────────── │ routers/ai.py    │ ◄─────────────────── │ Llama 3.1   │
-└──────────────┘     JSON structurat    └────────┬─────────┘      JSON object     └─────────────┘
+└──────────────┘     structured JSON    └────────┬─────────┘      JSON object     └─────────────┘
                                                  │
                                                  ▼
                                         ┌──────────────────┐
                                         │ PostgreSQL       │
-                                        │ (locații reale)  │
+                                        │ (real locations) │
                                         └──────────────────┘
 ```
 
-- **Furnizor:** [Groq](https://groq.com) — inferență rapidă, plan gratuit
+- **Provider:** [Groq](https://groq.com) — fast inference, free tier
 - **Model:** `llama-3.1-8b-instant`
-- **Fișier principal:** `backend/app/routers/ai.py`
-- **Componentă frontend:** `frontend/src/components/AIAssistant.tsx`
+- **Main file:** `backend/app/routers/ai.py`
+- **Frontend component:** `frontend/src/components/AIAssistant.tsx`
 
 ## Endpoint
 
@@ -39,63 +39,64 @@ Aplicația include un **asistent conversațional** ("Ghid AI local") care:
 ```json
 {
   "messages": [
-    { "role": "user", "content": "Recomandă-mi o cafenea liniștită pentru învățat" }
+    { "role": "user", "content": "Recommend a quiet café for studying" }
   ]
 }
 ```
 
-Întregul istoric al conversației este trimis la fiecare request (modelul nu are memorie între apeluri).
+The entire conversation history is sent with every request (the model has no memory between calls).
 
-**Response (JSON structurat, impus prin `response_format: json_object`):**
+**Response (structured JSON, enforced via `response_format: json_object`):**
 
 ```json
 {
-  "mesaj": "Îți recomand cafeneaua X...",
+  "mesaj": "I recommend café X...",
   "location_id": 12,
   "start_location_id": null,
   "refresh_locations": false
 }
 ```
 
-| Câmp | Semnificație |
+| Field | Meaning |
 |------|--------------|
-| `mesaj` | Răspunsul conversațional afișat utilizatorului |
-| `location_id` | ID-ul locației recomandate / destinației (harta face zoom pe ea) |
-| `start_location_id` | ID-ul locației de start, dacă utilizatorul a cerut un traseu |
-| `refresh_locations` | `true` dacă a fost adăugată o locație nouă și frontend-ul trebuie să reîncarce harta |
+| `mesaj` | The conversational answer shown to the user |
+| `location_id` | ID of the recommended location / destination (the map zooms to it) |
+| `start_location_id` | ID of the starting location, if the user asked for a route |
+| `refresh_locations` | `true` if a new location was added and the frontend should reload the map |
 
-Autentificarea este **opțională** (`get_optional_user`): oricine poate conversa cu ghidul, dar adăugarea de locații din link Google Maps cere cont de admin.
+Authentication is **optional** (`get_optional_user`): anyone can chat with the guide, but adding locations from a Google Maps link requires an admin account.
 
-## Grounding — cum evităm halucinațiile
+## Grounding — how we avoid hallucinations
 
-La fiecare request, **toate locațiile din baza de date** sunt serializate compact (`id`, `nume`, `categorie`, `descriere`, `tags`) și injectate în system prompt. Modelul primește instrucțiunea să aleagă doar din aceste date și să returneze ID-uri numerice existente. Astfel:
+On every request, **all locations from the database** are serialized compactly (`id`, `name`, `category`, `description`, `tags`) and injected into the system prompt. The model is instructed to choose only from this data and to return existing numeric IDs. As a result:
 
-- recomandările sunt întotdeauna locații reale de pe hartă;
-- ID-urile returnate pot fi validate de frontend înainte de zoom/rută.
+- recommendations are always real locations that exist on the map;
+- the returned IDs can be validated by the frontend before zooming/routing.
 
-## Fluxul de adăugare a locațiilor din Google Maps
+## Google Maps location-adding flow
 
-1. Backend-ul detectează cu regex link-uri `google.com/maps` sau `maps.app.goo.gl` în ultimul mesaj
-2. Verifică drepturile: utilizator neautentificat sau non-admin → AI-ul este instruit (printr-un mesaj de sistem) să refuze politicos
-3. Pentru admini: urmărește redirect-urile link-ului, extrage coordonatele (`@lat,lng`) și numele locației din URL sau din `<title>`
-4. Llama 3.1 clasifică locația într-una din categoriile aplicației și generează o descriere scurtă în română (răspuns JSON strict)
-5. Locația este creată în baza de date cu tag-ul `google_maps`, iar asistentul confirmă utilizatorului adăugarea
+1. The backend detects `google.com/maps` or `maps.app.goo.gl` links in the last message using a regex
+2. It checks permissions: unauthenticated or non-admin user → the AI is instructed (via a system message) to politely refuse
+3. For admins: it follows the link's redirects, extracts the coordinates (`@lat,lng`) and the location name from the URL or from the `<title>`
+4. Llama 3.1 classifies the location into one of the app's categories and generates a short description (strict JSON response)
+5. The location is created in the database with the `google_maps` tag, and the assistant confirms the addition to the user
 
-## Configurare
+## Configuration
 
 ```env
-GROQ_API_KEY=...   # backend/.env — obligatoriu pentru funcționalitatea AI
+GROQ_API_KEY=...   # backend/.env — required for the AI functionality
 ```
 
-Dacă biblioteca `groq` nu este instalată sau cheia lipsește, endpoint-ul răspunde cu un mesaj de eroare prietenos, iar restul aplicației funcționează normal — funcționalitatea AI este complet decuplată.
+If the `groq` library is not installed or the key is missing, the endpoint responds with a friendly error message and the rest of the application works normally — the AI functionality is fully decoupled.
 
-## Limitări cunoscute
+## Known limitations
 
-- **Context complet la fiecare apel:** toate locațiile sunt trimise în prompt la fiecare mesaj; la sute de locații, promptul poate depăși limita de context a modelului — ar fi nevoie de filtrare/căutare semantică prealabilă
-- **Fără memorie server-side:** istoricul conversației trăiește doar în starea componentei React
-- **Modelul poate greși ID-uri:** deși primește instrucțiuni stricte, un model de 8B poate returna ocazional `location_id` greșit; frontend-ul tratează ID-urile inexistente ca null
-- **Extragerea numelui din Google Maps este euristică** (regex pe URL/titlu) și poate produce nume imprecise pentru link-uri scurte
+- **Full context on every call:** all locations are sent in the prompt with every message; with hundreds of locations the prompt could exceed the model's context limit — pre-filtering / semantic search would be needed
+- **No server-side memory:** the conversation history lives only in the React component state
+- **The model can get IDs wrong:** despite strict instructions, an 8B model may occasionally return a wrong `location_id`; the frontend treats non-existent IDs as null
+- **Google Maps name extraction is heuristic** (regex over URL/title) and may produce imprecise names for short links
+- **The assistant converses in Romanian** — the system prompt and the in-app audience are Romanian-speaking by design
 
-## AI folosit în dezvoltare
+## AI used during development
 
-Pe lângă AI-ul din aplicație, echipa a folosit agenți AI (Claude Code) în procesul de dezvoltare — evaluarea detaliată a acestora se găsește în [AGENTS_EVALUATION.md](AGENTS_EVALUATION.md).
+Besides the in-app AI, the team used AI agents (Claude Code) during the development process — their detailed evaluation can be found in [AGENTS_EVALUATION.md](AGENTS_EVALUATION.md).

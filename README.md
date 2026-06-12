@@ -1,39 +1,39 @@
-# Harta Interactivă Brașov
+# Brașov Interactive Map
 
-O aplicație web interactivă pentru explorarea orașului Brașov — locații, recenzii, favorite și un ghid AI local.
+An interactive web application for exploring the city of Brașov — locations, reviews, favorites and a local AI guide.
 
-## Tehnologii
+## Tech Stack
 
 **Frontend:** React 19, TypeScript, Vite, React-Leaflet  
 **Backend:** FastAPI, SQLAlchemy, PostgreSQL, Alembic  
 **AI:** Groq API (Llama 3.1)  
 **Auth:** Google OAuth 2.0 + JWT
 
-## Funcționalități
+## Features
 
-- **Hartă interactivă** cu locații din Brașov (cafenele, parcuri, restaurante, obiective turistice etc.)
-- **Filtrare și căutare** după nume, categorie sau taguri
-- **Recenzii** — adaugă, vizualizează și șterge recenzii cu rating
-- **Raportare recenzii** — raportează conținut nepotrivit; adminii pot gestiona rapoartele
-- **Favorite** — salvează locații preferate și le vizualizezi în profilul tău
-- **Istoric recenzii** — vezi toate recenziile scrise de tine
-- **Ghid AI local** — asistent conversațional care recomandă locații, trasee și poate adăuga locații noi prin link Google Maps (doar admini)
-- **Admin Panel** — gestionează locații, aprobă, șterge și moderează rapoarte
-- **Autentificare Google** — login cu cont Google
+- **Interactive map** with locations in Brașov (cafés, parks, restaurants, tourist attractions, etc.)
+- **Filtering and search** by name, category or tags
+- **Reviews** — add, view and delete reviews with ratings
+- **Review reporting** — report inappropriate content; admins can manage reports
+- **Favorites** — save your favorite locations and view them on your profile
+- **Review history** — see all the reviews you have written
+- **Local AI guide** — conversational assistant that recommends locations, routes, and can add new locations from a Google Maps link (admins only)
+- **Admin panel** — manage locations, approve, delete and moderate reports
+- **Google sign-in** — log in with a Google account
 
-## Documentație
+## Documentation
 
-- [Documentația AI](docs/AI_DOCUMENTATION.md) — arhitectura și funcționarea Ghidului AI local (Groq / Llama 3.1)
-- [Evaluarea agenților AI](docs/AGENTS_EVALUATION.md) — cum au fost folosiți și evaluați agenții AI (Claude Code) în dezvoltarea proiectului
+- [AI Documentation](docs/AI_DOCUMENTATION.md) — architecture and inner workings of the local AI guide (Groq / Llama 3.1)
+- [AI Agents Evaluation](docs/AGENTS_EVALUATION.md) — how AI agents (Claude Code) were used and evaluated during the development of this project
 
-## Rulare locală
+## Running locally
 
-### Cerințe
+### Requirements
 - Docker Desktop
 - Node.js 18+
 - Python 3.11+
 
-### 1. Baza de date
+### 1. Database
 ```bash
 docker compose up -d
 ```
@@ -48,8 +48,8 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Backend disponibil la `http://localhost:8000`  
-Documentație API: `http://localhost:8000/docs`
+Backend available at `http://localhost:8000`  
+API documentation: `http://localhost:8000/docs`
 
 ### 3. Frontend
 ```bash
@@ -58,11 +58,11 @@ npm install
 npm run dev
 ```
 
-Frontend disponibil la `http://localhost:5173`
+Frontend available at `http://localhost:5173`
 
-### 4. Variabile de mediu
+### 4. Environment variables
 
-Creează fișierul `backend/.env`:
+Create the `backend/.env` file:
 
 ```env
 GOOGLE_CLIENT_ID=...
@@ -71,19 +71,19 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/auth/callback
 SECRET_KEY=...
 GROQ_API_KEY=...
 ALLOWED_DOMAINS=gmail.com,s.unibuc.ro,unibuc.ro
-# opțional — origin-urile permise de CORS, separate prin virgulă
+# optional — comma-separated list of allowed CORS origins
 # (default: http://localhost:5173,http://localhost)
 CORS_ORIGINS=http://localhost:5173,http://localhost
-# opțional — URL-ul frontend-ului, folosit la redirect după login
+# optional — frontend URL used for the post-login redirect
 # (default: http://localhost:5173)
 FRONTEND_URL=http://localhost:5173
 ```
 
-Frontend-ul citește opțional `VITE_API_URL` (default `http://localhost:8000`) — URL-ul backend-ului, embedat în bundle la build.
+The frontend optionally reads `VITE_API_URL` (default `http://localhost:8000`) — the backend URL, embedded into the bundle at build time.
 
-## Diagrame UML
+## UML Diagrams
 
-### Class Diagram — Modele
+### Class Diagram — Models
 
 ```mermaid
 classDiagram
@@ -133,15 +133,15 @@ classDiagram
         +DateTime created_at
     }
 
-    User "1" --> "0..*" Review : scrie
-    User "1" --> "0..*" Favorite : salvează
-    User "1" --> "0..*" ReviewReport : raportează
-    Location "1" --> "0..*" Review : primește
-    Location "1" --> "0..*" Favorite : apare în
-    Review "1" --> "0..*" ReviewReport : este raportat prin
+    User "1" --> "0..*" Review : writes
+    User "1" --> "0..*" Favorite : saves
+    User "1" --> "0..*" ReviewReport : reports
+    Location "1" --> "0..*" Review : receives
+    Location "1" --> "0..*" Favorite : appears in
+    Review "1" --> "0..*" ReviewReport : is reported through
 ```
 
-### Sequence Diagram — Autentificare Google OAuth
+### Sequence Diagram — Google OAuth Authentication
 
 ```mermaid
 sequenceDiagram
@@ -154,27 +154,27 @@ sequenceDiagram
     User->>Frontend: Click "Login"
     Frontend->>Backend: GET /auth/login
     Backend-->>Frontend: Redirect → Google OAuth URL
-    Frontend->>Google: Redirect cu client_id + scope
-    User->>Google: Autentificare cu cont Google
+    Frontend->>Google: Redirect with client_id + scope
+    User->>Google: Sign in with Google account
     Google-->>Backend: Redirect /auth/callback?code=...
     Backend->>Google: POST /token (exchange code)
     Google-->>Backend: access_token
     Backend->>Google: GET /userinfo
     Google-->>Backend: email, name
-    Backend->>DB: Caută user după email
-    alt User nou
+    Backend->>DB: Look up user by email
+    alt New user
         DB-->>Backend: null
         Backend->>DB: INSERT user
-    else User existent
+    else Existing user
         DB-->>Backend: User
     end
-    Backend->>Backend: Generează JWT (24h)
+    Backend->>Backend: Generate JWT (24h)
     Backend-->>Frontend: Redirect /auth/callback?token=JWT
-    Frontend->>Frontend: Salvează token în localStorage
-    Frontend-->>User: Redirecționat la hartă
+    Frontend->>Frontend: Store token in localStorage
+    Frontend-->>User: Redirected to the map
 ```
 
-### ER Diagram — Baza de date
+### ER Diagram — Database
 
 ```mermaid
 erDiagram
@@ -224,43 +224,43 @@ erDiagram
         datetime created_at
     }
 
-    users ||--o{ reviews : "scrie"
-    users ||--o{ favorites : "salvează"
-    users ||--o{ review_reports : "raportează"
-    locations ||--o{ reviews : "primește"
-    locations ||--o{ favorites : "apare în"
-    reviews ||--o{ review_reports : "este raportat prin"
+    users ||--o{ reviews : "writes"
+    users ||--o{ favorites : "saves"
+    users ||--o{ review_reports : "reports"
+    locations ||--o{ reviews : "receives"
+    locations ||--o{ favorites : "appears in"
+    reviews ||--o{ review_reports : "is reported through"
 ```
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`) — la fiecare push/PR pe `develop`/`main`: teste backend (pytest + PostgreSQL), lint și build frontend
-- **CD** (`.github/workflows/cd.yml`) — la fiecare push pe `develop`/`main`: construiește imaginile Docker pentru backend și frontend și le publică pe GitHub Container Registry
+- **CI** (`.github/workflows/ci.yml`) — on every push/PR to `develop`/`main`: backend tests (pytest + PostgreSQL), frontend lint and build
+- **CD** (`.github/workflows/cd.yml`) — after every successful CI run on `develop`/`main`: builds the Docker images for the backend and frontend and publishes them to GitHub Container Registry
 
-Imaginile publicate pot fi rulate direct:
+The published images can be run directly:
 
 ```bash
 docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-backend:latest
 docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-frontend:latest
 ```
 
-Pentru un alt mediu, imaginea de frontend se construiește cu URL-ul backend-ului dorit:
+For a different environment, build the frontend image with the desired backend URL:
 
 ```bash
 docker build --build-arg VITE_API_URL=https://api.example.com -t frontend ./frontend
 ```
 
-## Structura proiectului
+## Project structure
 
 ```
 ├── backend/
 │   ├── app/
-│   │   ├── models/        # Modele SQLAlchemy
-│   │   ├── schemas/       # Scheme Pydantic
-│   │   ├── crud/          # Logică acces date
-│   │   ├── routers/       # Endpoint-uri FastAPI
+│   │   ├── models/        # SQLAlchemy models
+│   │   ├── schemas/       # Pydantic schemas
+│   │   ├── crud/          # Data access logic
+│   │   ├── routers/       # FastAPI endpoints
 │   │   └── main.py
-│   ├── alembic/           # Migrații bază de date
+│   ├── alembic/           # Database migrations
 │   └── requirements.txt
 ├── frontend/
 │   └── src/

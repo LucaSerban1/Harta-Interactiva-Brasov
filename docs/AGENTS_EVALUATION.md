@@ -1,76 +1,76 @@
-# Evaluarea agenților AI folosiți în dezvoltare
+# Evaluation of the AI Agents Used During Development
 
-Acest document evaluează agenții AI utilizați în dezvoltarea proiectului: ce sarcini au primit, cum s-au descurcat, unde a fost nevoie de intervenție umană și ce concluzii am tras.
+This document evaluates the AI agents used while developing this project: what tasks they were given, how they performed, where human intervention was needed, and what conclusions we drew.
 
-## Agenți folosiți
+## Agents used
 
-| Agent | Model(e) | Rol în proiect |
+| Agent | Model(s) | Role in the project |
 |-------|----------|----------------|
-| **Claude Code** (CLI) | Claude Sonnet 4.6, Claude Fable 5 | Agent principal: implementare funcționalități, CI/CD, fix-uri, code review, documentație |
-| **Subagenți Claude Code** (`Explore`) | Sonnet | Căutare paralelă de bug-uri în code review (analiza pe unghiuri multiple) |
+| **Claude Code** (CLI) | Claude Sonnet 4.6, Claude Fable 5 | Main agent: feature implementation, CI/CD, fixes, code review, documentation |
+| **Claude Code subagents** (`Explore`) | Sonnet | Parallel bug hunting during code review (multi-angle analysis) |
 
-## Sarcini date agenților și rezultate
+## Tasks given to the agents and results
 
-### 1. Configurarea CI (GitHub Actions)
+### 1. CI setup (GitHub Actions)
 
-**Sarcina:** workflow de CI cu teste backend (pytest + PostgreSQL ca service container), lint și build frontend.
+**Task:** a CI workflow with backend tests (pytest + PostgreSQL as a service container), frontend lint and build.
 
-**Rezultat:** workflow-ul final funcționează, dar a necesitat **4 iterații de fix-uri** vizibile în istoricul git:
+**Result:** the final workflow works, but it required **4 fix iterations** visible in the git history:
 
-- `f4edfc5` — `DATABASE_URL` greșit pentru alembic + versiune de Node prea veche (18 → 20)
-- `33d9600` — importuri greșite în `seed.py`, erori de eslint, variabilă nefolosită
-- `6c3e876` — variabilă de `catch` nefolosită (regula `no-unused-vars`)
-- `aa9b143` — erori de tip TypeScript în `AIAssistant` și tipul `AIResponse`
+- `f4edfc5` — wrong `DATABASE_URL` for alembic + Node version too old (18 → 20)
+- `33d9600` — broken imports in `seed.py`, eslint errors, unused variable
+- `6c3e876` — unused `catch` variable (`no-unused-vars` rule)
+- `aa9b143` — TypeScript type errors in `AIAssistant` and the `AIResponse` type
 
-**Evaluare:** agentul a produs rapid scheletul corect, dar nu a anticipat diferențele dintre mediul local și runner-ul de CI (versiuni, variabile de mediu). Iterațiile au fost însă rapide — fiecare fix a durat minute, ghidat de log-urile de CI.
+**Evaluation:** the agent quickly produced a correct skeleton but did not anticipate the differences between the local environment and the CI runner (versions, environment variables). The iterations were fast, however — each fix took minutes, guided by the CI logs.
 
-### 2. Pipeline-ul de CD (PR [#31](https://github.com/LucaSerban1/Harta-Interactiva-Brasov/pull/31))
+### 2. CD pipeline (PR [#31](https://github.com/LucaSerban1/Harta-Interactiva-Brasov/pull/31))
 
-**Sarcina:** Dockerfile-uri pentru backend și frontend + workflow de publicare automată a imaginilor pe GitHub Container Registry.
+**Task:** Dockerfiles for the backend and frontend + a workflow that automatically publishes the images to GitHub Container Registry.
 
-**Rezultat:** implementare funcțională din prima iterație de cod, dar **code review-ul automat a găsit 3 probleme majore** în propria implementare a agentului (vezi secțiunea următoare), corectate apoi într-un commit de follow-up (`1f615d7`).
+**Result:** a working implementation on the first code iteration, but **the automated code review found 3 major problems** in the agent's own implementation (see the next section), which were then fixed in a follow-up commit (`1f615d7`).
 
-**Evaluare:** un exemplu bun de "AI care scrie + AI care verifică" — prima versiune era plauzibilă și ar fi trecut neobservată la o citire superficială, dar avea lacune reale de deployment (migrații nerulate, lipsa gating-ului pe CI).
+**Evaluation:** a good example of "AI that writes + AI that verifies" — the first version was plausible and would have gone unnoticed on a superficial read, but it had real deployment gaps (migrations never run, no gating on CI).
 
-### 3. Code review automat (PR #31)
+### 3. Automated code review (PR #31)
 
-**Sarcina:** review de tip "recall ridicat": 7 unghiuri de analiză rulate de subagenți paraleli → 12 candidați de bug-uri → verificare individuală → constatări finale postate ca review comments pe PR.
+**Task:** a high-recall review: 7 analysis angles run by parallel subagents → 12 bug candidates → individual verification → final findings posted as review comments on the PR.
 
-**Rezultat:**
+**Result:**
 
-| Metrică | Valoare |
+| Metric | Value |
 |---------|---------|
-| Candidați găsiți de subagenți | 12 |
-| Constatări confirmate/plauzibile | 5 (3 majore, 2 minore) |
-| Falsuri pozitive respinse la verificare | 2 |
-| Constatări transformate în issue-uri | 1 ([#32](https://github.com/LucaSerban1/Harta-Interactiva-Brasov/issues/32)) |
+| Candidates found by the subagents | 12 |
+| Confirmed/plausible findings | 5 (3 major, 2 minor) |
+| False positives rejected during verification | 2 |
+| Findings turned into issues | 1 ([#32](https://github.com/LucaSerban1/Harta-Interactiva-Brasov/issues/32)) |
 
-Exemple de constatări reale: CD-ul publica imagini chiar dacă testele picau; containerul de backend nu rula migrațiile alembic; bundle-ul de frontend embedează URL-ul API hardcodat.
+Examples of real findings: CD published images even when tests failed; the backend container never ran the alembic migrations; the frontend bundle embeds a hardcoded API URL.
 
-Exemple de falsuri pozitive respinse: un subagent a susținut că `IMAGE_PREFIX` conține majuscule și GHCR îl va respinge — fals, valoarea era deja lowercase (halucinație tipică: agentul a confundat numele repo-ului cu valoarea variabilei).
+Examples of rejected false positives: one subagent claimed that `IMAGE_PREFIX` contained uppercase letters and GHCR would reject it — false, the value was already lowercase (a typical hallucination: the agent confused the repository name with the variable's value).
 
-**Evaluare:** pasul de **verificare** este esențial — fără el, ~17% din constatări ar fi fost zgomot. Cu verificare, review-ul a găsit probleme pe care autorii (om + AI) le rataseră.
+**Evaluation:** the **verification** step is essential — without it, ~17% of the findings would have been noise. With verification, the review found problems that the authors (human + AI) had missed.
 
-### 4. Documentație și diagrame UML
+### 4. Documentation and UML diagrams
 
-**Sarcina:** README, diagrame Mermaid (class, sequence, ER), documentația AI.
+**Task:** README, Mermaid diagrams (class, sequence, ER), AI documentation.
 
-**Rezultat:** corect din prima în mare parte; diagramele au necesitat doar ajustări mici de sintaxă Mermaid. Agentul a citit codul real (modele SQLAlchemy, router-ul de auth) înainte de a desena diagramele, deci ele reflectă schema reală, nu una inventată.
+**Result:** mostly correct on the first attempt; the diagrams only needed small Mermaid syntax adjustments. The agent read the actual code (SQLAlchemy models, the auth router) before drawing the diagrams, so they reflect the real schema, not an invented one.
 
-## Criterii de evaluare și scoruri
+## Evaluation criteria and scores
 
-| Criteriu | Scor (1–5) | Observații |
+| Criterion | Score (1–5) | Notes |
 |----------|-----------|------------|
-| **Corectitudinea codului generat** | 4 | Codul compilează și funcționează aproape întotdeauna local; problemele apar la marginile sistemului (CI, deployment, configurare) |
-| **Autonomie** | 4 | Poate duce singur un flux complet issue → branch → PR → review → merge; cere confirmare la deciziile de arhitectură |
-| **Viteză** | 5 | Sarcini care ar dura ore (CD pipeline complet + docs) se termină în minute |
-| **Anticiparea mediului de producție** | 3 | Punctul cel mai slab: diferențele local vs. CI vs. container au necesitat iterații |
-| **Calitatea review-ului de cod** | 4 | Găsește bug-uri reale ratate de oameni, dar produce și falsuri pozitive — necesită pas de verificare |
-| **Documentație** | 5 | Documentația generată e ancorată în codul real, nu generică |
+| **Correctness of generated code** | 4 | The code compiles and works locally almost every time; problems appear at the system's edges (CI, deployment, configuration) |
+| **Autonomy** | 4 | Can carry a full issue → branch → PR → review → merge flow on its own; asks for confirmation on architectural decisions |
+| **Speed** | 5 | Tasks that would take hours (a full CD pipeline + docs) finish in minutes |
+| **Anticipating the production environment** | 3 | The weakest point: local vs. CI vs. container differences required iterations |
+| **Code review quality** | 4 | Finds real bugs missed by humans, but also produces false positives — a verification step is required |
+| **Documentation** | 5 | The generated documentation is grounded in the real code, not generic |
 
-## Concluzii
+## Conclusions
 
-1. **AI-ul nu înlocuiește review-ul, îl alimentează.** Cele mai valoroase rezultate au venit din combinația *agent care scrie* + *agent care verifică* + *om care decide* — review-ul automat a găsit bug-uri reale în cod scris tot de AI.
-2. **Log-urile de CI sunt cel mai bun feedback pentru agent.** Toate cele 4 iterații de fix CI au fost rezolvate rapid pentru că agentul a primit log-ul exact al erorii.
-3. **Verificarea umană rămâne obligatorie la marginile sistemului:** secrete, variabile de mediu, drepturi pe registry, comportament în producție.
-4. **Falsurile pozitive sunt gestionabile** dacă fluxul include un pas explicit de verificare a fiecărei constatări înainte de raportare.
+1. **AI does not replace code review — it powers it.** The most valuable results came from combining a *writing agent* + a *verifying agent* + a *human who decides* — the automated review found real bugs in code that was itself written by AI.
+2. **CI logs are the agent's best feedback.** All 4 CI fix iterations were resolved quickly because the agent received the exact error log.
+3. **Human verification remains mandatory at the system's edges:** secrets, environment variables, registry permissions, production behaviour.
+4. **False positives are manageable** as long as the workflow includes an explicit verification step for every finding before it is reported.
