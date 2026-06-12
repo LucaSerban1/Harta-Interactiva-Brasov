@@ -71,7 +71,12 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/auth/callback
 SECRET_KEY=...
 GROQ_API_KEY=...
 ALLOWED_DOMAINS=gmail.com,s.unibuc.ro,unibuc.ro
+# opțional — origin-urile permise de CORS, separate prin virgulă
+# (default: http://localhost:5173,http://localhost)
+CORS_ORIGINS=http://localhost:5173,http://localhost
 ```
+
+Frontend-ul citește opțional `VITE_API_URL` (default `http://localhost:8000`) — URL-ul backend-ului, embedat în bundle la build.
 
 ## Diagrame UML
 
@@ -234,6 +239,12 @@ Imaginile publicate pot fi rulate direct:
 ```bash
 docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-backend:latest
 docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-frontend:latest
+```
+
+Pentru un alt mediu, imaginea de frontend se construiește cu URL-ul backend-ului dorit:
+
+```bash
+docker build --build-arg VITE_API_URL=https://api.example.com -t frontend ./frontend
 ```
 
 ## Structura proiectului
