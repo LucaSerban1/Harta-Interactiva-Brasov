@@ -21,6 +21,11 @@ O aplicație web interactivă pentru explorarea orașului Brașov — locații, 
 - **Admin Panel** — gestionează locații, aprobă, șterge și moderează rapoarte
 - **Autentificare Google** — login cu cont Google
 
+## Documentație
+
+- [Documentația AI](docs/AI_DOCUMENTATION.md) — arhitectura și funcționarea Ghidului AI local (Groq / Llama 3.1)
+- [Evaluarea agenților AI](docs/AGENTS_EVALUATION.md) — cum au fost folosiți și evaluați agenții AI (Claude Code) în dezvoltarea proiectului
+
 ## Rulare locală
 
 ### Cerințe
