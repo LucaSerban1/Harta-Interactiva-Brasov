@@ -219,6 +219,18 @@ erDiagram
     reviews ||--o{ review_reports : "este raportat prin"
 ```
 
+## CI/CD
+
+- **CI** (`.github/workflows/ci.yml`) — la fiecare push/PR pe `develop`/`main`: teste backend (pytest + PostgreSQL), lint și build frontend
+- **CD** (`.github/workflows/cd.yml`) — la fiecare push pe `develop`/`main`: construiește imaginile Docker pentru backend și frontend și le publică pe GitHub Container Registry
+
+Imaginile publicate pot fi rulate direct:
+
+```bash
+docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-backend:latest
+docker pull ghcr.io/lucaserban1/harta-interactiva-brasov-frontend:latest
+```
+
 ## Structura proiectului
 
 ```
