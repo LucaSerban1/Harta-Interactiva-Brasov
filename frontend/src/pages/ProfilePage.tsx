@@ -55,7 +55,19 @@ export default function ProfilePage() {
 
     fetch(`${BASE_URL}/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
-    }).then(r => r.json()).then(setUser);
+    }).then(r => {
+      if (!r.ok) {
+        // Token invalid sau expirat -> deconectare si redirect la login
+        localStorage.removeItem('token');
+        navigate('/');
+        return null;
+      }
+      return r.json();
+    }).then(data => {
+      if (data) setUser(data);
+    }).catch(() => {
+      navigate('/');
+    });
 
     fetch(`${BASE_URL}/locations/`)
       .then(r => r.json()).then(setLocations);
@@ -129,7 +141,7 @@ export default function ProfilePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 1rem'
           }}>
-            {user.username[0].toUpperCase()}
+            {user.username?.[0]?.toUpperCase() ?? '?'}
           </div>
           <h2 style={{ margin: 0, color: 'black' }}>{user.username}</h2>
           <p style={{ color: '#555', marginTop: '0.25rem', fontSize: '14px' }}>{user.email}</p>
