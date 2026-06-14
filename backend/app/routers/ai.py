@@ -39,7 +39,12 @@ def process_google_maps_link(url: str, db: Session, client) -> Optional[dict]:
             final_url = str(response.url)
             html_content = response.text
         
-        coord_match = re.search(r'@(-?\d+\.\d+),(-?\d+\.\d+)', final_url)
+        # Coordonatele reale ale locului sunt in segmentul !3d<lat>!4d<lng> din
+        # data=...; partea @lat,lng este doar centrul camerei/viewport-ului, asa
+        # ca o folosim doar ca fallback.
+        place_match = re.search(r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)', final_url)
+        cam_match = re.search(r'@(-?\d+\.\d+),(-?\d+\.\d+)', final_url)
+        coord_match = place_match or cam_match
         if not coord_match:
             return None
         lat = float(coord_match.group(1))
@@ -116,9 +121,18 @@ def ai_chat(
                             new_location_msg += f"\nSISTEM: AI DETECTAT UN LINK GOOGLE MAPS. Locația '{new_loc.name}' a fost adăugată automat pe hartă cu ID-ul {new_loc.id}. Este OBLIGATORIU să îi confirmi utilizatorului că ai adăugat locația pe hartă, să îi prezinți descrierea ei și să o folosești ca 'location_id'."
                             locatii = crud_locations.get_all(db)
 
-        # Formatam locatiile pentru a fi compacte pentru prompt
+        # Formatam locatiile pentru a fi compacte pentru prompt.
+        # Trunchiem descrierile si renuntam la tags pentru a ramane sub limita
+        # de tokeni/minut a Groq (TPM); modelul are nevoie doar de nume,
+        # categorie si un rezumat scurt ca sa aleaga un location_id.
+        def _scurt(text: Optional[str], limita: int = 120) -> str:
+            if not text:
+                return ""
+            text = text.strip()
+            return text if len(text) <= limita else text[:limita].rstrip() + "…"
+
         date_context = [
-            {"id": loc.id, "nume": loc.name, "categorie": loc.category, "descriere": loc.description, "tags": loc.tags}
+            {"id": loc.id, "nume": loc.name, "categorie": loc.category, "descriere": _scurt(loc.description)}
             for loc in locatii
         ]
 
