@@ -2,6 +2,12 @@
 
 An interactive web application for exploring the city of Brașov — locations, reviews, favorites and a local AI guide.
 
+## Demo
+
+📹 **[Watch the demo video](https://drive.google.com/file/d/1Kj6wrCJVIjo_7rLIpKpwwAu30yMMrIsU/view?usp=sharing)**
+
+The demo walks through the application end to end: browsing the interactive map of Brașov, filtering and searching for locations, signing in with Google, adding reviews and favorites, and chatting with the local AI guide — including how an admin can add a new location straight from a Google Maps link.
+
 ## Tech Stack
 
 **Frontend:** React 19, TypeScript, Vite, React-Leaflet  
